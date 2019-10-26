@@ -581,7 +581,8 @@ var
     World_step_step_q = new Quaternion(),
     World_step_step_w = new Quaternion(),
     World_step_step_wq = new Quaternion(),
-    invI_tau_dt = new Vec3();
+    invI_tau_dt = new Vec3(),
+    clamp01 = function(n) { return Math.min(Math.max(n, 0.0), 1.0); };
 World.prototype.internalStep = function(dt){
     this.dt = dt;
 
@@ -860,12 +861,12 @@ World.prototype.internalStep = function(dt){
     for(i=0; i!==N; i++){
         var bi = bodies[i];
         if(bi.type & DYNAMIC){ // Only for dynamic bodies
-            var ld = pow(1.0 - bi.linearDamping,dt);
+            var ld = pow(clamp01(1.0 - bi.linearDamping),dt);
             var v = bi.velocity;
             v.mult(ld,v);
             var av = bi.angularVelocity;
             if(av){
-                var ad = pow(1.0 - bi.angularDamping,dt);
+                var ad = pow(clamp01(1.0 - bi.angularDamping),dt);
                 av.mult(ad,av);
             }
         }
@@ -1004,11 +1005,14 @@ World.prototype.emitContactEvents = (function(){
             for (var i = 0, l = removals.length; i < l; i += 2) {
                 var shapeA = this.getShapeById(removals[i]);
                 var shapeB = this.getShapeById(removals[i+1]);
-                endShapeContactEvent.shapeA = shapeA;
-                endShapeContactEvent.shapeB = shapeB;
-                endShapeContactEvent.bodyA = shapeA.body;
-                endShapeContactEvent.bodyB = shapeB.body;
-                this.dispatchEvent(endShapeContactEvent);
+
+                if (shapeA && shapeB) {
+                    endShapeContactEvent.shapeA = shapeA;
+                    endShapeContactEvent.shapeB = shapeB;
+                    endShapeContactEvent.bodyA = shapeA.body;
+                    endShapeContactEvent.bodyB = shapeB.body;
+                    this.dispatchEvent(endShapeContactEvent);
+                }
             }
             endShapeContactEvent.bodyA = endShapeContactEvent.bodyB = endShapeContactEvent.shapeA = endShapeContactEvent.shapeB = null;
         }

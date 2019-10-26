@@ -607,6 +607,8 @@ Narrowphase.prototype.sphereTrimesh = function (
                     tmp.vsub(localSpherePos, r.ni);
                     r.ni.normalize();
                     r.ni.scale(sphereShape.radius, r.ri);
+                    r.ri.vadd(spherePos, r.ri);
+                    r.ri.vsub(sphereBody.position, r.ri);
 
                     Transform.pointToWorldFrame(trimeshPos, trimeshQuat, tmp, tmp);
                     tmp.vsub(trimeshBody.position, r.rj);
@@ -645,6 +647,8 @@ Narrowphase.prototype.sphereTrimesh = function (
             tmp.vsub(localSpherePos, r.ni);
             r.ni.normalize();
             r.ni.scale(sphereShape.radius, r.ri);
+            r.ri.vadd(spherePos, r.ri);
+            r.ri.vsub(sphereBody.position, r.ri);
 
             Transform.pointToWorldFrame(trimeshPos, trimeshQuat, tmp, tmp);
             tmp.vsub(trimeshBody.position, r.rj);
@@ -1794,7 +1798,7 @@ Narrowphase.prototype.sphereHeightfield = function (
         iMaxY = Math.ceil((localSpherePos.y + radius) / w) + 1;
 
     // Bail out if we are out of the terrain
-    if(iMaxX < 0 || iMaxY < 0 || iMinX > data.length || iMaxY > data[0].length){
+    if(iMaxX < 0 || iMaxY < 0 || iMinX > data.length || iMinY > data[0].length){
         return;
     }
 

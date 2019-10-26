@@ -1,4 +1,4 @@
-// Sun, 14 Oct 2018 14:18:48 GMT
+// Sat, 26 Oct 2019 16:58:54 GMT
 
 /*
  * Copyright (c) 2015 cannon.js Authors
@@ -328,7 +328,7 @@ AABB.prototype.getCorners = function(a, b, c, d, e, f, g, h){
     b.set( u.x, l.y, l.z );
     c.set( u.x, u.y, l.z );
     d.set( l.x, u.y, u.z );
-    e.set( u.x, l.y, l.z );
+    e.set( u.x, l.y, u.z );
     f.set( l.x, u.y, l.z );
     g.set( l.x, l.y, u.z );
     h.copy(u);
@@ -8931,19 +8931,25 @@ ConvexPolyhedron.prototype.calculateWorldAABB = function(pos,quat,min,max){
         var v = tempWorldVertex;
         if     (v.x < minx || minx===undefined){
             minx = v.x;
-        } else if(v.x > maxx || maxx===undefined){
+        } 
+        
+        if(v.x > maxx || maxx===undefined){
             maxx = v.x;
         }
 
         if     (v.y < miny || miny===undefined){
             miny = v.y;
-        } else if(v.y > maxy || maxy===undefined){
+        } 
+        
+        if(v.y > maxy || maxy===undefined){
             maxy = v.y;
         }
 
         if     (v.z < minz || minz===undefined){
             minz = v.z;
-        } else if(v.z > maxz || maxz===undefined){
+        }  
+        
+        if(v.z > maxz || maxz===undefined){
             maxz = v.z;
         }
     }
@@ -10155,7 +10161,7 @@ Sphere.prototype.calculateLocalInertia = function(mass,target){
 };
 
 Sphere.prototype.volume = function(){
-    return 4.0 * Math.PI * this.radius / 3.0;
+    return 4.0 * Math.PI * Math.pow(this.radius, 3) / 3.0;
 };
 
 Sphere.prototype.updateBoundingSphereRadius = function(){
@@ -11417,18 +11423,13 @@ OctreeNode.prototype.rayQuery = function(ray, treeTransform, result) {
  * @method removeEmptyNodes
  */
 OctreeNode.prototype.removeEmptyNodes = function() {
-    var queue = [this];
-    while (queue.length) {
-        var node = queue.pop();
-        for (var i = node.children.length - 1; i >= 0; i--) {
-            if(!node.children[i].data.length){
-                node.children.splice(i, 1);
-            }
+    for (var i = this.children.length - 1; i >= 0; i--) {
+        this.children[i].removeEmptyNodes();
+        if(!this.children[i].children.length && !this.children[i].data.length){
+            this.children.splice(i, 1);
         }
-        Array.prototype.push.apply(queue, node.children);
     }
 };
-
 },{"../collision/AABB":3,"../math/Vec3":31}],52:[function(_dereq_,module,exports){
 module.exports = Pool;
 
@@ -12234,6 +12235,8 @@ Narrowphase.prototype.sphereTrimesh = function (
                     tmp.vsub(localSpherePos, r.ni);
                     r.ni.normalize();
                     r.ni.scale(sphereShape.radius, r.ri);
+                    r.ri.vadd(spherePos, r.ri);
+                    r.ri.vsub(sphereBody.position, r.ri);
 
                     Transform.pointToWorldFrame(trimeshPos, trimeshQuat, tmp, tmp);
                     tmp.vsub(trimeshBody.position, r.rj);
@@ -12272,6 +12275,8 @@ Narrowphase.prototype.sphereTrimesh = function (
             tmp.vsub(localSpherePos, r.ni);
             r.ni.normalize();
             r.ni.scale(sphereShape.radius, r.ri);
+            r.ri.vadd(spherePos, r.ri);
+            r.ri.vsub(sphereBody.position, r.ri);
 
             Transform.pointToWorldFrame(trimeshPos, trimeshQuat, tmp, tmp);
             tmp.vsub(trimeshBody.position, r.rj);
@@ -13421,7 +13426,7 @@ Narrowphase.prototype.sphereHeightfield = function (
         iMaxY = Math.ceil((localSpherePos.y + radius) / w) + 1;
 
     // Bail out if we are out of the terrain
-    if(iMaxX < 0 || iMaxY < 0 || iMinX > data.length || iMaxY > data[0].length){
+    if(iMaxX < 0 || iMaxY < 0 || iMinX > data.length || iMinY > data[0].length){
         return;
     }
 
@@ -14074,7 +14079,8 @@ var
     World_step_step_q = new Quaternion(),
     World_step_step_w = new Quaternion(),
     World_step_step_wq = new Quaternion(),
-    invI_tau_dt = new Vec3();
+    invI_tau_dt = new Vec3(),
+    clamp01 = function(n) { return Math.min(Math.max(n, 0.0), 1.0); };
 World.prototype.internalStep = function(dt){
     this.dt = dt;
 
@@ -14353,12 +14359,12 @@ World.prototype.internalStep = function(dt){
     for(i=0; i!==N; i++){
         var bi = bodies[i];
         if(bi.type & DYNAMIC){ // Only for dynamic bodies
-            var ld = pow(1.0 - bi.linearDamping,dt);
+            var ld = pow(clamp01(1.0 - bi.linearDamping),dt);
             var v = bi.velocity;
             v.mult(ld,v);
             var av = bi.angularVelocity;
             if(av){
-                var ad = pow(1.0 - bi.angularDamping,dt);
+                var ad = pow(clamp01(1.0 - bi.angularDamping),dt);
                 av.mult(ad,av);
             }
         }
@@ -14497,11 +14503,14 @@ World.prototype.emitContactEvents = (function(){
             for (var i = 0, l = removals.length; i < l; i += 2) {
                 var shapeA = this.getShapeById(removals[i]);
                 var shapeB = this.getShapeById(removals[i+1]);
-                endShapeContactEvent.shapeA = shapeA;
-                endShapeContactEvent.shapeB = shapeB;
-                endShapeContactEvent.bodyA = shapeA.body;
-                endShapeContactEvent.bodyB = shapeB.body;
-                this.dispatchEvent(endShapeContactEvent);
+
+                if (shapeA && shapeB) {
+                    endShapeContactEvent.shapeA = shapeA;
+                    endShapeContactEvent.shapeB = shapeB;
+                    endShapeContactEvent.bodyA = shapeA.body;
+                    endShapeContactEvent.bodyB = shapeB.body;
+                    this.dispatchEvent(endShapeContactEvent);
+                }
             }
             endShapeContactEvent.bodyA = endShapeContactEvent.bodyB = endShapeContactEvent.shapeA = endShapeContactEvent.shapeB = null;
         }
