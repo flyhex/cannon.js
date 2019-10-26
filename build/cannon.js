@@ -1,4 +1,4 @@
-// Sat, 26 Oct 2019 16:58:54 GMT
+// Sat, 26 Oct 2019 17:09:31 GMT
 
 /*
  * Copyright (c) 2015 cannon.js Authors
@@ -14018,9 +14018,8 @@ var step_tmp1 = new Vec3();
  */
 World.prototype.step = function(dt, timeSinceLastCalled, maxSubSteps){
     maxSubSteps = maxSubSteps || 10;
-    if (typeof timeSinceLastCalled === 'undefined') timeSinceLastCalled = -1;
 
-    if(timeSinceLastCalled === -1){ // Fixed, simple stepping
+    if(typeof timeSinceLastCalled === 'undefined'){ // Fixed, simple stepping
 
         this.internalStep(dt);
 
