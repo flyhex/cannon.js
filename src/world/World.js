@@ -520,9 +520,8 @@ var step_tmp1 = new Vec3();
  */
 World.prototype.step = function(dt, timeSinceLastCalled, maxSubSteps){
     maxSubSteps = maxSubSteps || 10;
-    if (typeof timeSinceLastCalled === 'undefined') timeSinceLastCalled = -1;
 
-    if(timeSinceLastCalled === -1){ // Fixed, simple stepping
+    if(typeof timeSinceLastCalled === 'undefined'){ // Fixed, simple stepping
 
         this.internalStep(dt);
 
