@@ -877,7 +877,8 @@ World.prototype.internalStep = function(dt){
     for(i=0; i!==N; i++){
         var bi = bodies[i];
         if(bi.preStep){
-            bi.preStep.call(bi);
+            // bi.preStep.call(bi);
+            bi.preStep(bi);
         }
     }
 
@@ -913,7 +914,8 @@ World.prototype.internalStep = function(dt){
         var bi = bodies[i];
         var postStep = bi.postStep;
         if(postStep){
-            postStep.call(bi);
+            // postStep.call(bi);
+            postStep(bi);
         }
     }
 

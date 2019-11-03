@@ -1,4 +1,4 @@
-// Sat, 26 Oct 2019 17:09:31 GMT
+// Sun, 03 Nov 2019 14:32:48 GMT
 
 /*
  * Copyright (c) 2015 cannon.js Authors
@@ -14375,7 +14375,8 @@ World.prototype.internalStep = function(dt){
     for(i=0; i!==N; i++){
         var bi = bodies[i];
         if(bi.preStep){
-            bi.preStep.call(bi);
+            // bi.preStep.call(bi);
+            bi.preStep(bi);
         }
     }
 
@@ -14411,7 +14412,8 @@ World.prototype.internalStep = function(dt){
         var bi = bodies[i];
         var postStep = bi.postStep;
         if(postStep){
-            postStep.call(bi);
+            // postStep.call(bi);
+            postStep(bi);
         }
     }
 
