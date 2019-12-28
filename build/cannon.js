@@ -1,4 +1,4 @@
-// Thu, 26 Dec 2019 18:15:54 GMT
+// Sat, 28 Dec 2019 19:21:11 GMT
 
 /*
  * Copyright (c) 2015 cannon.js Authors
@@ -5968,8 +5968,8 @@ Body.prototype.vectorToLocalFrame = function(worldVector, result){
  */
 Body.prototype.pointToWorldFrame = function(localPoint,result){
     var result = result || new Vec3();
-    this.quaternion.vmult(localPoint,result);
-    result.vadd(this.position,result);
+    this.interpolatedQuaternion.vmult(localPoint,result);
+    result.vadd(this.interpolatedPosition,result);
     return result;
 };
 
@@ -5982,7 +5982,7 @@ Body.prototype.pointToWorldFrame = function(localPoint,result){
  */
 Body.prototype.vectorToWorldFrame = function(localVector, result){
     var result = result || new Vec3();
-    this.quaternion.vmult(localVector, result);
+    this.interpolatedQuaternion.vmult(localVector, result);
     return result;
 };
 
@@ -6397,6 +6397,12 @@ function RaycastVehicle(options){
      * @default 2
      */
     this.indexUpAxis = typeof(options.indexUpAxis) !== 'undefined' ? options.indexUpAxis : 2;
+
+    /**
+     * Number of wheels currently touching the ground
+     * @property {integer} numWheelsOnGround
+     */
+    this.numWheelsOnGround = 0;
 }
 
 var tmpVec1 = new Vec3();
@@ -6568,6 +6574,7 @@ RaycastVehicle.prototype.updateVehicle = function(timeStep){
             wheel.deltaRotation = 0;
         }
 
+        wheel.lastRotation = wheel.rotation;
         wheel.rotation += wheel.deltaRotation; // Use the old value
         wheel.deltaRotation *= 0.99; // damping of rotation when not in contact
     }
@@ -6657,6 +6664,8 @@ RaycastVehicle.prototype.castRay = function(wheel) {
 
     wheel.raycastResult.groundObject = 0;
 
+    wheel.lastSuspensionLength = wheel.suspensionLength;
+
     if (object) {
         depth = raycastResult.distance;
         wheel.raycastResult.hitNormalWorld  = raycastResult.hitNormalWorld;
@@ -6695,6 +6704,7 @@ RaycastVehicle.prototype.castRay = function(wheel) {
     } else {
 
         //put wheel info as in rest position
+        
         wheel.suspensionLength = wheel.suspensionRestLength + 0 * wheel.maxSuspensionTravel;
         wheel.suspensionRelativeVelocity = 0.0;
         wheel.directionWorld.scale(-1, wheel.raycastResult.hitNormalWorld);
@@ -6739,7 +6749,7 @@ RaycastVehicle.prototype.updateWheelTransform = function(wheelIndex){
     steeringOrn.setFromAxisAngle(up, steering);
 
     var rotatingOrn = new Quaternion();
-    rotatingOrn.setFromAxisAngle(right, wheel.rotation);
+    rotatingOrn.setFromAxisAngle(right, this.lerp(wheel.lastRotation, wheel.rotation, this.world.interpolationFactor));
 
     // World rotation of the wheel
     var q = wheel.worldTransform.quaternion;
@@ -6751,9 +6761,15 @@ RaycastVehicle.prototype.updateWheelTransform = function(wheelIndex){
     // world position of the wheel
     var p = wheel.worldTransform.position;
     p.copy(wheel.directionWorld);
-    p.scale(wheel.suspensionLength, p);
+    p.scale(this.lerp(wheel.lastSuspensionLength, wheel.suspensionLength, this.world.interpolationFactor), p);
     p.vadd(wheel.chassisConnectionPointWorld, p);
 };
+
+RaycastVehicle.prototype.lerp = function (value1, value2, amount) {
+    amount = amount < 0 ? 0 : amount;
+    amount = amount > 1 ? 1 : amount;
+    return value1 + (value2 - value1) * amount;
+}
 
 var directions = [
     new Vec3(1, 0, 0),
@@ -6786,14 +6802,14 @@ RaycastVehicle.prototype.updateFriction = function(timeStep) {
     var forwardWS = updateFriction_forwardWS;
     var axle = updateFriction_axle;
 
-    var numWheelsOnGround = 0;
+    this.numWheelsOnGround = 0;
 
     for (var i = 0; i < numWheels; i++) {
         var wheel = wheelInfos[i];
 
         var groundObject = wheel.raycastResult.body;
         if (groundObject){
-            numWheelsOnGround++;
+            this.numWheelsOnGround++;
         }
 
         wheel.sideImpulse = 0;
@@ -6840,7 +6856,7 @@ RaycastVehicle.prototype.updateFriction = function(timeStep) {
     }
 
     var sideFactor = 1;
-    var fwdFactor = 0.5;
+    var fwdFactor = 1;
 
     this.sliding = false;
     for (var i = 0; i < numWheels; i++) {
@@ -7842,6 +7858,12 @@ function WheelInfo(options){
     this.rotation = 0;
 
     /**
+     * Rotation value, in radians.
+     * @property {number} lastRotation
+     */
+    this.lastRotation = 0;
+
+    /**
      * @property {number} deltaRotation
      */
     this.deltaRotation = 0;
@@ -7895,6 +7917,11 @@ function WheelInfo(options){
      * @property {number} suspensionLength
      */
     this.suspensionLength = 0;
+
+    /**
+     * @property {number} lastSuspensionLength
+     */
+    this.lastSuspensionLength = 0;
 
     /**
      * @property {number} sideImpulse
@@ -13580,6 +13607,15 @@ function World(options){
      */
     this.time = 0.0;
 
+
+    /**
+     * Factor for interpolation 0-1
+     * @property interpolationFactor
+     * @type {Number}
+     */
+    this.interpolationFactor = 0;
+
+    
     /**
      * Number of timesteps taken since start
      * @property stepnumber
@@ -14037,6 +14073,7 @@ World.prototype.step = function(dt, timeSinceLastCalled, maxSubSteps){
         this.accumulator %= dt;
 
         var t = this.accumulator / dt;
+        this.interpolationFactor = t;
         for(var j=0; j !== this.bodies.length; j++){
             var b = this.bodies[j];
             b.previousPosition.lerp(b.position, t, b.interpolatedPosition);

@@ -170,6 +170,12 @@ function WheelInfo(options){
     this.rotation = 0;
 
     /**
+     * Rotation value, in radians.
+     * @property {number} lastRotation
+     */
+    this.lastRotation = 0;
+
+    /**
      * @property {number} deltaRotation
      */
     this.deltaRotation = 0;
@@ -223,6 +229,11 @@ function WheelInfo(options){
      * @property {number} suspensionLength
      */
     this.suspensionLength = 0;
+
+    /**
+     * @property {number} lastSuspensionLength
+     */
+    this.lastSuspensionLength = 0;
 
     /**
      * @property {number} sideImpulse

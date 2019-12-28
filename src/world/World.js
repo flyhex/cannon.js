@@ -85,6 +85,15 @@ function World(options){
      */
     this.time = 0.0;
 
+
+    /**
+     * Factor for interpolation 0-1
+     * @property interpolationFactor
+     * @type {Number}
+     */
+    this.interpolationFactor = 0;
+
+    
     /**
      * Number of timesteps taken since start
      * @property stepnumber
@@ -542,6 +551,7 @@ World.prototype.step = function(dt, timeSinceLastCalled, maxSubSteps){
         this.accumulator %= dt;
 
         var t = this.accumulator / dt;
+        this.interpolationFactor = t;
         for(var j=0; j !== this.bodies.length; j++){
             var b = this.bodies[j];
             b.previousPosition.lerp(b.position, t, b.interpolatedPosition);
