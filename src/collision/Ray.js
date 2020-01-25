@@ -188,6 +188,10 @@ Ray.prototype.intersectBody = function (body, result) {
             continue; // Skip
         }
 
+        if((this.collisionFilterGroup & shape.collisionFilterMask)===0 || (shape.collisionFilterGroup & this.collisionFilterMask)===0){
+            continue; // Skip
+        }
+
         body.quaternion.mult(body.shapeOrientations[i], qi);
         body.quaternion.vmult(body.shapeOffsets[i], xi);
         xi.vadd(body.position, xi);

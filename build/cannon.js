@@ -1,4 +1,4 @@
-// Mon, 30 Dec 2019 18:09:49 GMT
+// Sat, 25 Jan 2020 12:52:36 GMT
 
 /*
  * Copyright (c) 2015 cannon.js Authors
@@ -1392,6 +1392,10 @@ Ray.prototype.intersectBody = function (body, result) {
         var shape = body.shapes[i];
 
         if(checkCollisionResponse && !shape.collisionResponse){
+            continue; // Skip
+        }
+
+        if((this.collisionFilterGroup & shape.collisionFilterMask)===0 || (shape.collisionFilterGroup & this.collisionFilterMask)===0){
             continue; // Skip
         }
 
@@ -11912,7 +11916,11 @@ Narrowphase.prototype.getContacts = function(p1, p2, world, result, oldcontacts,
                 xj.vadd(bj.position, xj);
                 var sj = bj.shapes[j];
 
-                if(!((si.collisionFilterMask & sj.collisionFilterGroup) && (sj.collisionFilterMask & si.collisionFilterGroup))){
+                // if(!((si.collisionFilterMask & sj.collisionFilterGroup) && (sj.collisionFilterMask & si.collisionFilterGroup))){
+                //     continue;
+                // }
+
+                if((si.collisionFilterGroup & sj.collisionFilterMask)===0 || (sj.collisionFilterGroup & si.collisionFilterMask)===0){
                     continue;
                 }
 

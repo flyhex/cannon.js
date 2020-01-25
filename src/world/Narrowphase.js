@@ -260,7 +260,11 @@ Narrowphase.prototype.getContacts = function(p1, p2, world, result, oldcontacts,
                 xj.vadd(bj.position, xj);
                 var sj = bj.shapes[j];
 
-                if(!((si.collisionFilterMask & sj.collisionFilterGroup) && (sj.collisionFilterMask & si.collisionFilterGroup))){
+                // if(!((si.collisionFilterMask & sj.collisionFilterGroup) && (sj.collisionFilterMask & si.collisionFilterGroup))){
+                //     continue;
+                // }
+
+                if((si.collisionFilterGroup & sj.collisionFilterMask)===0 || (sj.collisionFilterGroup & si.collisionFilterMask)===0){
                     continue;
                 }
 
