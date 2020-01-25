@@ -158,6 +158,9 @@ RaycastVehicle.prototype.getVehicleAxisWorld = function(axisIndex, result){
 };
 
 RaycastVehicle.prototype.updateVehicle = function(timeStep){
+
+    if (this.chassisBody.sleepState > 1) return;
+
     var wheelInfos = this.wheelInfos;
     var numWheels = wheelInfos.length;
     var chassisBody = this.chassisBody;

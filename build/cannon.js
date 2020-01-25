@@ -1,4 +1,4 @@
-// Sat, 25 Jan 2020 12:52:36 GMT
+// Sat, 25 Jan 2020 14:22:34 GMT
 
 /*
  * Copyright (c) 2015 cannon.js Authors
@@ -5613,7 +5613,7 @@ function Body(options){
      * @type {Number}
      * @default 0.1
      */
-    this.sleepSpeedLimit = typeof(options.sleepSpeedLimit) !== 'undefined' ? options.sleepSpeedLimit : 0.1;
+    this.sleepSpeedLimit = typeof(options.sleepSpeedLimit) !== 'undefined' ? options.sleepSpeedLimit : 0.03;
 
     /**
      * If the body has been sleepy for this sleepTimeLimit seconds, it is considered sleeping.
@@ -6498,6 +6498,9 @@ RaycastVehicle.prototype.getVehicleAxisWorld = function(axisIndex, result){
 };
 
 RaycastVehicle.prototype.updateVehicle = function(timeStep){
+
+    if (this.chassisBody.sleepState > 1) return;
+
     var wheelInfos = this.wheelInfos;
     var numWheels = wheelInfos.length;
     var chassisBody = this.chassisBody;

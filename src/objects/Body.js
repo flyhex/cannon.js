@@ -203,7 +203,7 @@ function Body(options){
      * @type {Number}
      * @default 0.1
      */
-    this.sleepSpeedLimit = typeof(options.sleepSpeedLimit) !== 'undefined' ? options.sleepSpeedLimit : 0.1;
+    this.sleepSpeedLimit = typeof(options.sleepSpeedLimit) !== 'undefined' ? options.sleepSpeedLimit : 0.03;
 
     /**
      * If the body has been sleepy for this sleepTimeLimit seconds, it is considered sleeping.
